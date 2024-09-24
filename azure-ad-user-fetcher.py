@@ -36,7 +36,7 @@ if "access_token" in token_response:
 
         if response.status_code == 200:
             users_data = response.json()
-            all_users_data.extend(users_data['value']) 
+            all_users_data.extend(users_data['value'])  
 
             next_link = users_data.get('@odata.nextLink')
         else:
@@ -45,18 +45,22 @@ if "access_token" in token_response:
 
     with open('b2c_users_displayname_identities_summary.csv', 'w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
-        writer.writerow(["Display Name", "Identities", "Distinct Identities"])
+        writer.writerow(["Display Name", "First Identity"])
 
         for user in all_users_data:
             display_name = user.get('displayName', 'N/A')
 
             identities = user.get('identities', [])
-            identities_str = ", ".join([f"{identity['issuer']}: {identity['signInType']}" for identity in identities]) if identities else "No identities"
             
-            for identity in identities:
-                identity_counter[identity['issuer']] += 1
-
-            writer.writerow([display_name, identities_str])
+            if identities:
+                first_identity = identities[0]
+                issuer = first_identity['issuer']
+                identity_str = f"{issuer}: {first_identity['signInType']}"
+                identity_counter[issuer] += 1
+            else:
+                identity_str = "No identities"
+            
+            writer.writerow([display_name, identity_str])
 
     with open('identity_summary.csv', 'w', newline='', encoding='utf-8') as summary_file:
         summary_writer = csv.writer(summary_file)
